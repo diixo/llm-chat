@@ -13,9 +13,10 @@
       <div class="mb-3">
         <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
         {{ field }} {{ field.errors }}
+        {% if field.help_text %}<div id="{{ field.auto_id }}_helptext" class="form-text">{{ field.help_text }}</div>{% endif %}
       </div>
       {% endfor %}
-      <p class="small text-muted">One persona sentence per line. Changing the model or persona starts a new conversation.</p>
+      <p class="small text-muted">One persona sentence per line. Changing the model or the assistant's persona starts a new conversation.</p>
       <button class="btn btn-primary" type="submit" id="send-message">Send</button>
       <span id="reply-status" class="small mt-2" aria-live="polite"></span>
     </form>
