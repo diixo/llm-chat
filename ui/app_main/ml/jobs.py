@@ -135,9 +135,24 @@ def stop(run_id):
 
 
 def log_tail(run_id):
+    """Return the last 100 log lines, reading backwards to their boundaries."""
     path = run_path(run_id) / "train.log"
     if not path.exists():
         return ""
+    line_limit = 100
+    chunks = []
+    line_breaks = 0
     with path.open("rb") as source:
-        source.seek(max(0, path.stat().st_size - 12000))
-        return source.read().decode("utf-8", errors="replace")
+        source.seek(0, os.SEEK_END)
+        position = source.tell()
+        # An extra separator excludes any partial line at a chunk boundary.
+        while position > 0 and line_breaks <= line_limit:
+            size = min(position, 8192)
+            position -= size
+            source.seek(position)
+            chunk = source.read(size)
+            chunks.append(chunk)
+            line_breaks += chunk.count(b"\n")
+    tail = b"".join(reversed(chunks))
+    lines = tail.splitlines(keepends=True)[-line_limit:]
+    return b"".join(lines).decode("utf-8", errors="replace")
