@@ -51,12 +51,15 @@ appear as chat models. This version saves a final model after all epochs;
 it does not support resuming interrupted training.
 
 Open **Dialogue**, choose a completed run, enter persona sentences, and send
-a message. The conversation is kept in the browser's Django session, with
-the last few exchanges used as context. Changing persona/model resets that
-context. Dialogue inference uses CPU with a token cache so training can use the
-GPU. Requests sharing a server-side session are serialized; a reset from another
-tab waits for the current reply, then clears the conversation. These pages are
-intended for the project's local development server.
+a message. Persona, model selection, and conversation history are saved as plain
+JSON in `ui/data/dialogues/<conversation-id>.json` (excluded from Git). A signed
+browser cookie identifies the file; the dialogue page does not use Django
+sessions or write to `db.sqlite3`. The last few exchanges are used as context.
+Changing persona/model resets that context. Dialogue inference uses CPU with a
+token cache so training can use the GPU. Requests sharing a conversation are
+serialized; a reset from another tab waits for the current reply, then clears
+the JSON history. These pages are intended for the project's local development
+server.
 
 Run the checks:
 

@@ -3,10 +3,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
+from django.core.signing import get_cookie_signer
 from django.test import Client, SimpleTestCase, override_settings
 from filelock import FileLock
 
-from . import views
+from . import conversations, views
 from .ml import jobs
 
 
@@ -17,8 +18,8 @@ class DialogueConcurrencyTests(SimpleTestCase):
         self.root = Path(temporary.name)
         self.override = override_settings(
             TRAINING_ROOT=self.root,
-            SESSION_ENGINE="django.contrib.sessions.backends.file",
-            SESSION_FILE_PATH=str(self.root),
+            DIALOGUE_ROOT=self.root / "dialogues",
+            SESSION_ENGINE="django.contrib.sessions.backends.db",
         )
         self.override.enable()
         self.addCleanup(self.override.disable)
@@ -30,6 +31,9 @@ class DialogueConcurrencyTests(SimpleTestCase):
             mock.start()
             self.addCleanup(mock.stop)
         self.client.get("/dialogue")
+        self.conversation_id = get_cookie_signer(
+            salt=conversations.COOKIE_NAME + "app_main.dialogue",
+        ).unsign(self.client.cookies[conversations.COOKIE_NAME].value)
         self.other = Client()
         self.other.cookies = self.client.cookies.copy()
         self.data = {"run_id": "abc123", "persona": "I like books.", "message": "First message"}
@@ -90,21 +94,20 @@ class DialogueConcurrencyTests(SimpleTestCase):
     def test_reset_waits_and_does_not_restore_in_flight_reply(self):
         histories = self.run_overlapping_posts({"action": "reset"})
         self.assertEqual(histories, [["First message"]])
-        self.assertNotIn("dialogue", self.other.session)
+        self.assertEqual(conversations.load(self.conversation_id), {})
 
     def test_parallel_messages_reload_history_after_waiting(self):
         second_data = {**self.data, "message": "Second message"}
         histories = self.run_overlapping_posts(second_data)
         self.assertEqual(histories, [["First message"], ["First message", "Reply 1", "Second message"]])
-        self.assertEqual(self.other.session["dialogue"]["history"],
+        self.assertEqual(conversations.load(self.conversation_id)["history"],
                          ["First message", "Reply 1", "Second message", "Reply 2"])
 
-    def test_view_exception_releases_session_lock(self):
+    def test_view_exception_releases_json_lock(self):
         with patch.object(views, "_dialogue_response", side_effect=RuntimeError("test failure")):
             with self.assertRaisesMessage(RuntimeError, "test failure"):
                 self.client.post("/dialogue", self.data)
-        for path in (self.root / ".dialogue-locks").glob("*.lock"):
-            with FileLock(path, timeout=0):
-                pass
+        with FileLock(conversations.path(self.conversation_id).with_suffix(".lock"), timeout=0):
+            pass
         with patch("app_main.ml.dialogue.reply", return_value="Recovered"):
             self.assertEqual(self.client.post("/dialogue", self.data).status_code, 302)

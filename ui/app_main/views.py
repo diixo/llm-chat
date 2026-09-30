@@ -1,4 +1,3 @@
-import hashlib
 import json
 
 from django.conf import settings
@@ -10,6 +9,7 @@ from filelock import FileLock, Timeout
 
 from .forms import TrainingForm, DialogueForm
 from .ml import jobs
+from . import conversations
 
 
 def main(request):
@@ -56,44 +56,27 @@ def training_status(request):
 
 @require_http_methods(["GET", "POST"])
 def dialogue(request):
-    if request.method == "GET":
-        # Establish the cookie before the first reply, so other tabs and reset
-        # requests refer to the same server-side session while it is generated.
-        request.session.get("dialogue")
-        if not request.session.session_key:
-            request.session["_dialogue_initialized"] = True
-        return _dialogue_response(request)
-
-    lock_directory = jobs.root() / ".dialogue-locks"
-    lock_directory.mkdir(parents=True, exist_ok=True)
-    session_key = request.session.session_key
-    lock_name = hashlib.sha256((session_key or "new-session").encode()).hexdigest()
-    lock = FileLock(lock_directory / f"{lock_name}.lock", timeout=120, thread_local=False)
+    conversation_id, new_cookie = conversations.identify(request)
     try:
-        lock.acquire()
+        if request.method == "POST":
+            conversations.root().mkdir(parents=True, exist_ok=True)
+            with FileLock(conversations.path(conversation_id).with_suffix(".lock"), timeout=120):
+                # The lock covers reading, generation, and the atomic JSON write.
+                response = _dialogue_response(request, conversation_id)
+        else:
+            response = _dialogue_response(request, conversation_id)
     except Timeout:
-        return HttpResponse("Another dialogue request is still running. Please retry shortly.", status=409)
-    try:
-        # A preceding request may have changed the session while we waited.
-        request.session = request.session.__class__(session_key=session_key)
-        request.session.get("dialogue")
-        if not request.session.session_key:
-            request.session["_dialogue_initialized"] = True
-        response = _dialogue_response(request)
-    except BaseException:
-        lock.release()
-        raise
-    # SessionMiddleware saves after the view returns. Keep the lock through
-    # that save; Django closes the response after middleware/server processing.
-    response._resource_closers.append(lock.release)
+        response = HttpResponse("Another dialogue request is still running. Please retry shortly.", status=409)
+    if new_cookie:
+        conversations.set_cookie(response, conversation_id)
     return response
 
 
-def _dialogue_response(request):
+def _dialogue_response(request, conversation_id):
     available = [run for run in jobs.runs() if run["ready"]]
-    conversation = request.session.get("dialogue", {})
+    conversation = conversations.load(conversation_id)
     if request.method == "POST" and request.POST.get("action") == "reset":
-        request.session.pop("dialogue", None)
+        conversations.save(conversation_id, {})
         return redirect("app_main:dialogue")
     form = DialogueForm(request.POST if request.method == "POST" else None, available=available,
                         initial={"run_id": conversation.get("run_id"),
@@ -111,8 +94,9 @@ def _dialogue_response(request):
                            values["persona"].splitlines(), history)
             if not answer:
                 raise ValueError("The model returned an empty reply. Please try again.")
-            request.session["dialogue"] = {"run_id": values["run_id"], "persona": values["persona"],
-                                           "history": history + [answer]}
+            conversations.save(conversation_id, {
+                "run_id": values["run_id"], "persona": values["persona"], "history": history + [answer],
+            })
             return redirect("app_main:dialogue")
         except Exception as exc:
             error = f"Could not generate a reply: {exc}"

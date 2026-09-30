@@ -3,8 +3,10 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import Mock, patch
 
+from django.core.signing import get_cookie_signer
 from django.test import SimpleTestCase, override_settings
 
+from . import conversations
 from .forms import TrainingForm
 from .ml import jobs
 
@@ -15,7 +17,9 @@ class TrainingPagesTests(SimpleTestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.settings_override = override_settings(
-            TRAINING_ROOT=self.root, SESSION_ENGINE="django.contrib.sessions.backends.signed_cookies"
+            TRAINING_ROOT=self.root,
+            DIALOGUE_ROOT=self.root / "dialogues",
+            SESSION_ENGINE="django.contrib.sessions.backends.db",
         )
         self.settings_override.enable()
         self.addCleanup(self.settings_override.disable)
@@ -63,16 +67,22 @@ class TrainingPagesTests(SimpleTestCase):
         self.assertEqual(self.client.post("/training", {"action": "stop", "run_id": "abc123"}).status_code, 302)
         self.assertTrue((run / "stop").exists())
 
-    def test_dialogue_session_and_persona_change(self):
+    def test_dialogue_json_persistence_and_persona_change(self):
         run = self.root / "abc123"
         (run / "model").mkdir(parents=True)
         for name in jobs.MODEL_FILES:
             (run / "model" / name).touch()
         jobs.write_json(run / "status.json", {"id": "abc123", "state": "completed", "config": {}})
         data = {"run_id": "abc123", "persona": "I like books.", "message": "Hello"}
+        self.client.get("/dialogue")
+        conversation_id = get_cookie_signer(
+            salt=conversations.COOKIE_NAME + "app_main.dialogue",
+        ).unsign(self.client.cookies[conversations.COOKIE_NAME].value)
         with patch("app_main.ml.dialogue.reply", return_value="Hi!") as reply:
             self.assertEqual(self.client.post("/dialogue", data).status_code, 302)
-            self.assertEqual(self.client.session["dialogue"]["history"], ["Hello", "Hi!"])
+            stored = json.loads(conversations.path(conversation_id).read_text(encoding="utf-8"))
+            self.assertEqual(stored["history"], ["Hello", "Hi!"])
+            self.assertContains(self.client.get("/dialogue"), "Hi!")
             data["message"] = "How are you?"
             self.client.post("/dialogue", data)
             self.assertEqual(reply.call_args.args[2], ["Hello", "Hi!", "How are you?"])
@@ -80,7 +90,7 @@ class TrainingPagesTests(SimpleTestCase):
             self.client.post("/dialogue", data)
             self.assertEqual(reply.call_args.args[2], ["How are you?"])
         self.client.post("/dialogue", {"action": "reset"})
-        self.assertNotIn("dialogue", self.client.session)
+        self.assertEqual(conversations.load(conversation_id), {})
 
     def test_launch_failure_terminates_unregistered_worker(self):
         process = Mock(pid=123456)
