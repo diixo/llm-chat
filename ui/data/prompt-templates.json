@@ -1,0 +1,41 @@
+{
+  "goal": "Prompt templates used to format training and inference examples for the models.",
+  "templates": [
+    {
+      "id": "alpaca",
+      "name": "Alpaca",
+      "description": "Instruction + input (document) + response. The default SFT format for the 4 document-analysis tasks.",
+      "template": "### Instruction:\n{instruction}\n\n### Document:\n{document}\n\n### Response:\n"
+    },
+    {
+      "id": "chatml",
+      "name": "ChatML",
+      "description": "Role-tagged turns wrapped in <|im_start|>/<|im_end|> markers. Used by Qwen and OpenAI-style chat models.",
+      "template": "<|im_start|>system\nYou are a helpful document-analysis assistant.<|im_end|>\n<|im_start|>user\n{instruction}\n\n{document}<|im_end|>\n<|im_start|>assistant\n"
+    },
+    {
+      "id": "gpt",
+      "name": "GPT",
+      "description": "OpenAI chat-completions style with System / User / Assistant roles.",
+      "template": "System: You are a helpful document-analysis assistant.\nUser: {instruction}\n\n{document}\nAssistant:"
+    },
+    {
+      "id": "llama2",
+      "name": "Llama-2",
+      "description": "Llama-2 chat format with [INST] tags and a <<SYS>> system block.",
+      "template": "<s>[INST] <<SYS>>\nYou are a helpful document-analysis assistant.\n<</SYS>>\n\n{instruction}\n\n{document} [/INST]"
+    },
+    {
+      "id": "llama3",
+      "name": "Llama-3",
+      "description": "Llama-3 chat format with header-id tags and <|eot_id|> turn separators.",
+      "template": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\nYou are a helpful document-analysis assistant.<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n{instruction}\n\n{document}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+    },
+    {
+      "id": "phi3",
+      "name": "Phi-3",
+      "description": "Phi-3 chat format — ChatML-like scheme with its own <|system|>/<|user|>/<|assistant|> role tokens and <|end|> separators. Note: the format differs across Phi generations, so it is version-specific.",
+      "template": "<|system|>\nYou are a helpful document-analysis assistant.<|end|>\n<|user|>\n{instruction}\n\n{document}<|end|>\n<|assistant|>\n"
+    }
+  ]
+}

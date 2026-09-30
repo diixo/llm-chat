@@ -1,0 +1,30 @@
+{
+  "goal": "A single instruction-following model fine-tuned (SFT) on top of a pretrained base covers the 4 document-analysis tasks. Other model types are optional directions.",
+  "model_types": [
+    {
+      "name": "instruction-following",
+      "needed": true,
+      "note": "Core — all 4 tasks are instructions."
+    },
+    {
+      "name": "task-oriented assistant",
+      "needed": true,
+      "note": "The 4 tasks are the assistant's tasks."
+    },
+    {
+      "name": "question-answering",
+      "needed": false,
+      "note": "A 5th task, if you add Q&A over the document."
+    },
+    {
+      "name": "multi-turn with history",
+      "needed": false,
+      "note": "Only needed for follow-up dialogue about the document."
+    },
+    {
+      "name": "emotional / personalized",
+      "needed": false,
+      "note": "Not directly related to document analysis."
+    }
+  ]
+}

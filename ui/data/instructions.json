@@ -1,0 +1,33 @@
+{
+  "goal": "Take a pretrained model and fine-tune it (SFT) to perform 4 document-analysis tasks by instruction — with a single instruction-following model.",
+  "tasks": [
+    {
+      "id": "summarize",
+      "icon": "summarize",
+      "title": "Summarize",
+      "instruction": "Summarize the key point of the document",
+      "description": "Condense the document to its key point."
+    },
+    {
+      "id": "identify",
+      "icon": "auto_awesome",
+      "title": "Identify highlights",
+      "instruction": "Identify what stands out most in document",
+      "description": "Pick out what stands out most in the document."
+    },
+    {
+      "id": "analyze",
+      "icon": "insights",
+      "title": "Analyze themes",
+      "instruction": "Analyze the main themes and patterns",
+      "description": "Break down the main themes and patterns."
+    },
+    {
+      "id": "report",
+      "icon": "assignment",
+      "title": "Brief report",
+      "instruction": "Create brief report of document takeaways",
+      "description": "Assemble a brief report of document takeaways."
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "goal": "Training configuration cards for managing hyperparameters",
+  "configs": [
+    {
+      "id": "conf_warm-up",
+      "name": "Warm-up",
+      "max_len": 256,
+      "learning_rate": 0.0001,
+      "batch_size": 4,
+      "epochs": 1
+    },
+    {
+      "id": "conf_pre-train-base",
+      "name": "Pre-train (base)",
+      "max_len": 0,
+      "learning_rate": 8e-05,
+      "batch_size": 16,
+      "epochs": 1,
+      "micro_batch_size": 16,
+      "sequence_length": 1024
+    },
+    {
+      "id": "conf_pre-train-stabilization",
+      "name": "Pre-train (stabilization)",
+      "max_len": 256,
+      "learning_rate": 8e-05,
+      "batch_size": 10,
+      "epochs": 1
+    },
+    {
+      "id": "conf_pre-training-extended",
+      "name": "Pre-training (extended)",
+      "max_len": 0,
+      "learning_rate": 8e-05,
+      "batch_size": 7,
+      "epochs": 1,
+      "sequence_length": 512
+    }
+  ]
+}

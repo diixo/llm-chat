@@ -1,0 +1,52 @@
+{
+  "goal": "Model cards registry",
+  "architectures": [
+    "gpt-r small (302M)",
+    "gpt-2 small (124M)",
+    "gpt-2 medium (355M)",
+    "gpt-2 large (774M)",
+    "gpt-2 xl (1.5B)"
+  ],
+  "models": [
+    {
+      "id": "mod_gpt-r",
+      "name": "gpt-r-0.3b-warmup",
+      "architecture": "gpt-r small (302M)",
+      "parent_id": null,
+      "config_id": "conf_warm-up",
+      "dataset_ids": [
+        "aiteticwikipedia"
+      ]
+    },
+    {
+      "id": "mod_gpt-r-03b-base",
+      "name": "gpt-r-0.3b-base",
+      "architecture": "gpt-r small (302M)",
+      "parent_id": "mod_gpt-r",
+      "config_id": "conf_pre-train-base",
+      "dataset_ids": [
+        "aiteticwikipedia"
+      ]
+    },
+    {
+      "id": "mod_gpt-r-03b",
+      "name": "gpt-r-0.3b",
+      "architecture": "gpt-r small (302M)",
+      "parent_id": "mod_gpt-r-03b-base",
+      "config_id": "conf_pre-train-stabilization",
+      "dataset_ids": [
+        "aiteticwikipedia"
+      ]
+    },
+    {
+      "id": "mod_gpt-r-post-train",
+      "name": "gptr-noomo-0.3b",
+      "architecture": "gpt-r small (302M)",
+      "parent_id": "mod_gpt-r-03b",
+      "config_id": "conf_pre-training-extended",
+      "dataset_ids": [
+        "eli5-lfqa-combined"
+      ]
+    }
+  ]
+}

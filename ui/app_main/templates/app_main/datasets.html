@@ -1,0 +1,163 @@
+{% extends "app_main/base.html" %}
+
+{% block meta %}
+<title>Diixo - Datasets</title>
+<meta property="og:title" content="Diixo - Datasets">
+<meta name="description" content="Diixo datasets">
+<meta property="og:description" content="Diixo datasets">
+{% endblock %}
+
+{% block content %}
+
+<h3 class="fw-bold mt-4">Datasets ({{ datasets|length }})</h3>
+<p class="text-muted mb-3">{{ goal }}</p>
+
+<button type="button" class="btn btn-main d-inline-flex align-items-center align-self-start mb-2"
+  data-bs-toggle="modal" data-bs-target="#addDatasetModal">
+  <span class="material-icons me-1">add</span> Add dataset
+</button>
+
+<div class="table-responsive mt-2">
+  <table class="table table-sm table-hover align-middle bg-white">
+    <thead>
+      <tr>
+        <th scope="col">Name</th>
+        <th scope="col">Task</th>
+        <th scope="col">Tags</th>
+        <th scope="col">Description</th>
+        <th scope="col">Links</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in datasets %}
+      <tr>
+        <td class="fw-semibold text-nowrap">{{ d.name }}</td>
+        <td>
+          {% for t in d.task %}
+            <code class="small me-1">{{ t }}</code>
+          {% endfor %}
+        </td>
+        <td>
+          {% for tag in d.tags %}
+            <span class="badge text-bg-light border">{{ tag }}</span>
+          {% endfor %}
+        </td>
+        <td class="small text-body-secondary">{{ d.description }}</td>
+        <td class="text-nowrap">
+          {% for label, url in d.links.items %}
+            <a href="{{ url }}" target="_blank" rel="noopener" class="small d-block">{{ label }}</a>
+          {% endfor %}
+        </td>
+        <td>
+          <button type="button" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center"
+            data-bs-toggle="modal" data-bs-target="#editDatasetModal"
+            data-id="{{ d.id }}" data-name="{{ d.name }}" data-task="{{ d.task|join:', ' }}"
+            data-tags="{{ d.tags|join:', ' }}" data-description="{{ d.description }}"
+            data-website="{{ d.links.website|default_if_none:'' }}">
+            <span class="material-icons" style="font-size: 18px;">edit</span>
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="modal fade" id="addDatasetModal" tabindex="-1" aria-labelledby="addDatasetModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="addDatasetModalLabel">Add dataset</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="dsName" class="form-label">Name</label>
+            <input type="text" class="form-control" id="dsName" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label for="dsTask" class="form-label">Task</label>
+            <input type="text" class="form-control" id="dsTask" name="task" placeholder="e.g. language_modeling, reading_comprehension (comma-separated)">
+          </div>
+          <div class="mb-3">
+            <label for="dsTags" class="form-label">Tags</label>
+            <input type="text" class="form-control" id="dsTags" name="tags" placeholder="QA, Dialogue (comma-separated)">
+          </div>
+          <div class="mb-3">
+            <label for="dsDesc" class="form-label">Description</label>
+            <textarea class="form-control" id="dsDesc" name="description" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="dsWebsite" class="form-label">Website URL</label>
+            <input type="url" class="form-control" id="dsWebsite" name="website" placeholder="https://...">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="editDatasetModal" tabindex="-1" aria-labelledby="editDatasetModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="edit">
+        <input type="hidden" name="dataset_id" id="editDsId">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editDatasetModalLabel">Edit dataset</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="editDsName" class="form-label">Name</label>
+            <input type="text" class="form-control" id="editDsName" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label for="editDsTask" class="form-label">Task</label>
+            <input type="text" class="form-control" id="editDsTask" name="task">
+          </div>
+          <div class="mb-3">
+            <label for="editDsTags" class="form-label">Tags</label>
+            <input type="text" class="form-control" id="editDsTags" name="tags" placeholder="QA, Dialogue (comma-separated)">
+          </div>
+          <div class="mb-3">
+            <label for="editDsDesc" class="form-label">Description</label>
+            <textarea class="form-control" id="editDsDesc" name="description" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="editDsWebsite" class="form-label">Website URL</label>
+            <input type="url" class="form-control" id="editDsWebsite" name="website">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="submit" class="btn btn-outline-danger me-auto order-first"
+            name="action" value="delete" formnovalidate>Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('editDatasetModal').addEventListener('show.bs.modal', function (event) {
+    var btn = event.relatedTarget;
+    document.getElementById('editDsId').value = btn.getAttribute('data-id');
+    document.getElementById('editDsName').value = btn.getAttribute('data-name');
+    document.getElementById('editDsTask').value = btn.getAttribute('data-task');
+    document.getElementById('editDsTags').value = btn.getAttribute('data-tags');
+    document.getElementById('editDsDesc').value = btn.getAttribute('data-description');
+    document.getElementById('editDsWebsite').value = btn.getAttribute('data-website');
+  });
+</script>
+
+{% endblock %}

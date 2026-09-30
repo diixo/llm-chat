@@ -1,0 +1,239 @@
+{
+  "goal": "Evaluator cards for tracking model performance",
+  "eval_types": [
+    "benchmark",
+    "human eval",
+    "automated metrics",
+    "a/b test"
+  ],
+  "eval_categories": [
+    "Linguistics & Grammar",
+    "Commonsense & Reasoning",
+    "Academic & Knowledge",
+    "Language Modeling"
+  ],
+  "evaluators": [
+    {
+      "id": "eval_mmlu",
+      "name": "MMLU",
+      "eval_type": "benchmark",
+      "metrics": [
+        "accuracy"
+      ],
+      "category": "Academic & Knowledge"
+    },
+    {
+      "id": "eval_hellaswag",
+      "name": "HellaSwag",
+      "eval_type": "benchmark",
+      "metrics": [
+        "normalized accuracy"
+      ],
+      "category": "Commonsense & Reasoning"
+    },
+    {
+      "id": "eval_arc",
+      "name": "ARC-Challenge",
+      "eval_type": "benchmark",
+      "metrics": [
+        "normalized accuracy"
+      ],
+      "category": "Academic & Knowledge"
+    },
+    {
+      "id": "eval_winogrande",
+      "name": "WinoGrande",
+      "eval_type": "benchmark",
+      "metrics": [
+        "accuracy"
+      ],
+      "category": "Commonsense & Reasoning"
+    },
+    {
+      "id": "eval_truthfulqa",
+      "name": "TruthfulQA",
+      "eval_type": "benchmark",
+      "metrics": [
+        "accuracy",
+        "informativeness"
+      ]
+    },
+    {
+      "id": "eval_gsm8k",
+      "name": "GSM8K",
+      "eval_type": "benchmark",
+      "metrics": [
+        "accuracy"
+      ]
+    },
+    {
+      "id": "eval_humaneval",
+      "name": "HumanEval",
+      "eval_type": "benchmark",
+      "metrics": [
+        "pass@1"
+      ]
+    },
+    {
+      "id": "eval_perplexity",
+      "name": "Perplexity",
+      "eval_type": "automated metrics",
+      "metrics": [
+        "perplexity"
+      ]
+    },
+    {
+      "id": "eval_bleu",
+      "name": "BLEU",
+      "eval_type": "automated metrics",
+      "metrics": [
+        "BLEU"
+      ]
+    },
+    {
+      "id": "eval_rouge",
+      "name": "ROUGE",
+      "eval_type": "automated metrics",
+      "metrics": [
+        "ROUGE-1",
+        "ROUGE-2",
+        "ROUGE-L"
+      ]
+    },
+    {
+      "id": "eval_human-evaluation",
+      "name": "Human Evaluation",
+      "eval_type": "human eval",
+      "metrics": [
+        "relevance",
+        "fluency",
+        "coherence"
+      ]
+    },
+    {
+      "id": "eval_ab-test",
+      "name": "A/B Test",
+      "eval_type": "a/b test",
+      "metrics": [
+        "win rate"
+      ]
+    },
+    {
+      "id": "eval_blimp",
+      "name": "BLiMP",
+      "eval_type": "benchmark",
+      "category": "Linguistics & Grammar",
+      "metrics": [
+        "accuracy"
+      ]
+    },
+    {
+      "id": "eval_piqa",
+      "name": "PIQA",
+      "eval_type": "benchmark",
+      "category": "Commonsense & Reasoning",
+      "metrics": [
+        "normalized accuracy"
+      ]
+    },
+    {
+      "id": "eval_boolq",
+      "name": "BoolQ",
+      "eval_type": "benchmark",
+      "category": "Commonsense & Reasoning",
+      "metrics": [
+        "accuracy"
+      ]
+    },
+    {
+      "id": "eval_copa",
+      "name": "COPA",
+      "eval_type": "benchmark",
+      "category": "Commonsense & Reasoning",
+      "metrics": [
+        "accuracy"
+      ]
+    },
+    {
+      "id": "eval_race",
+      "name": "RACE",
+      "eval_type": "benchmark",
+      "category": "Commonsense & Reasoning",
+      "metrics": [
+        "accuracy"
+      ]
+    },
+    {
+      "id": "eval_commonsenseqa",
+      "name": "CommonsenseQA",
+      "eval_type": "benchmark",
+      "category": "Commonsense & Reasoning",
+      "metrics": [
+        "accuracy"
+      ]
+    },
+    {
+      "id": "eval_sciq",
+      "name": "SciQ",
+      "eval_type": "benchmark",
+      "category": "Academic & Knowledge",
+      "metrics": [
+        "normalized accuracy"
+      ]
+    },
+    {
+      "id": "eval_arc-easy",
+      "name": "ARC-Easy",
+      "eval_type": "benchmark",
+      "category": "Academic & Knowledge",
+      "metrics": [
+        "normalized accuracy"
+      ]
+    },
+    {
+      "id": "eval_openbookqa",
+      "name": "OpenBookQA",
+      "eval_type": "benchmark",
+      "category": "Academic & Knowledge",
+      "metrics": [
+        "normalized accuracy"
+      ]
+    },
+    {
+      "id": "eval_triviaqa",
+      "name": "TriviaQA",
+      "eval_type": "benchmark",
+      "category": "Language Modeling",
+      "metrics": [
+        "accuracy"
+      ]
+    },
+    {
+      "id": "eval_lambada",
+      "name": "LAMBADA",
+      "eval_type": "benchmark",
+      "category": "Language Modeling",
+      "metrics": [
+        "accuracy"
+      ]
+    },
+    {
+      "id": "eval_c4-perplexity",
+      "name": "C4-Perplexity",
+      "eval_type": "benchmark",
+      "category": "Language Modeling",
+      "metrics": [
+        "word perplexity"
+      ]
+    },
+    {
+      "id": "eval_wikitext-2wo",
+      "name": "WikiText-2wo",
+      "eval_type": "benchmark",
+      "category": "Language Modeling",
+      "metrics": [
+        "word perplexity"
+      ]
+    }
+  ]
+}
