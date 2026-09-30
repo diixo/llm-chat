@@ -13,6 +13,7 @@ def encode_context(tokenizer, persona, history, budget):
     encode = lambda text: tokenizer.encode(text, add_special_tokens=False)
     prefix = [tokenizer.bos_token_id] + encode(" ".join(persona))[:budget // 3]
     # The final history utterance is always from the user; the reply is speaker2.
+    # For odd-length histories, zero-based indices 1, 3, 5, ... are the assistant.
     turns = []
     for index, text in enumerate(history):
         speaker = speaker1 if (len(history) - index) % 2 else speaker2
