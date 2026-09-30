@@ -91,6 +91,7 @@ def run_path(run_id):
 
 def start(config):
     config = dict(config)
+    config["dataset"] = "full"
     root().mkdir(parents=True, exist_ok=True)
     with FileLock(str(root() / "launch.lock"), timeout=5):
         if any(run["state"] in ACTIVE for run in runs()):

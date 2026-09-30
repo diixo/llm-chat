@@ -14,9 +14,9 @@ For GPU training, install a CUDA-enabled PyTorch build appropriate for your
 machine using https://pytorch.org/get-started/locally/. An existing compatible
 CUDA installation of PyTorch can be used as-is.
 
-Open **Training** in the sidebar. The default sample run uses the two small
-files in `data/personachat_truecased`; select **Full PersonaChat** for
-the three `personachat_truecased_full_train.part1.json`, `.part2.json`, and
+Open **Training** in the sidebar. Every run uses the full dataset in
+`data/personachat_truecased`: the three
+`personachat_truecased_full_train.part1.json`, `.part2.json`, and
 `.part3.json` training files and `personachat_truecased_full_valid.json`.
 Each training part is a standalone JSON array under 100 MB. The loader combines
 all three in order, preserving the full training dataset; all parts are required.
@@ -27,7 +27,6 @@ Each run starts from those pretrained weights. The worker runs separately
 from Django, uses CUDA when available, mixed precision on CUDA, gradient
 checkpointing, and gradient accumulation. Start with batch size 1, length 256,
 and accumulation 8. Larger settings may exceed a 6 GB GPU's memory.
-The sample run checks the pipeline; it is not enough to train a useful chatbot.
 
 This implementation follows the persona/history/speaker-token approach from
 [Hugging Face's TransferTransfo example](https://github.com/huggingface/transfer-learning-conv-ai),

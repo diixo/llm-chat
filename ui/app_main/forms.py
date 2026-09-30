@@ -2,7 +2,6 @@ from django import forms
 
 
 class TrainingForm(forms.Form):
-    dataset = forms.ChoiceField(choices=[("sample", "Sample — quick test"), ("full", "Full PersonaChat")])
     epochs = forms.IntegerField(min_value=1, max_value=20, initial=1)
     batch_size = forms.IntegerField(min_value=1, max_value=8, initial=1)
     gradient_accumulation = forms.IntegerField(min_value=1, max_value=64, initial=8)

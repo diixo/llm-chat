@@ -30,23 +30,27 @@ class TrainingPagesTests(SimpleTestCase):
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, 'href="/training"')
             self.assertContains(response, 'href="/dialogue"')
+            if url == "/training":
+                self.assertNotContains(response, 'name="dataset"')
         self.assertEqual(self.client.get("/training/status").json(), {"runs": [], "log": ""})
 
     def test_invalid_training_settings_do_not_launch(self):
         with patch.object(jobs, "start") as start:
-            response = self.client.post("/training", {"dataset": "../../other", "epochs": "-1"})
+            response = self.client.post("/training", {"epochs": "-1"})
             self.assertEqual(response.status_code, 200)
             start.assert_not_called()
-        form = TrainingForm({"dataset": "sample", "epochs": 1, "batch_size": 1,
+        form = TrainingForm({"epochs": 1, "batch_size": 1,
                              "gradient_accumulation": 8, "max_length": 256, "learning_rate": "nan"})
         self.assertFalse(form.is_valid())
 
     def test_valid_launch_and_duplicate_error(self):
-        data = {"dataset": "sample", "epochs": 1, "batch_size": 1,
+        data = {"epochs": 1, "batch_size": 1,
                 "gradient_accumulation": 8, "max_length": 256, "learning_rate": 0.0000625}
         with patch.object(jobs, "start", return_value="run") as start:
             self.assertEqual(self.client.post("/training", data).status_code, 302)
-            self.assertEqual(start.call_args.args[0]["max_length"], 256)
+            self.assertEqual(start.call_args.args[0], data)
+            self.assertEqual(self.client.post("/training", {**data, "dataset": "sample"}).status_code, 302)
+            self.assertEqual(start.call_args.args[0], data)
         with patch.object(jobs, "start", side_effect=ValueError("A training run is already active.")):
             self.assertContains(self.client.post("/training", data), "already active")
 
@@ -101,7 +105,10 @@ class TrainingPagesTests(SimpleTestCase):
                 jobs.start({"dataset": "sample"})
         process.terminate.assert_called_once()
         process.wait.assert_called_once()
-        self.assertEqual(jobs.runs()[0]["state"], "failed")
+        run = jobs.runs()[0]
+        self.assertEqual(run["state"], "failed")
+        self.assertEqual(run["config"]["dataset"], "full")
+        self.assertEqual(jobs.read_json(self.root / run["id"] / "config.json")["dataset"], "full")
 
     def test_incomplete_checkpoint_is_not_available(self):
         run = self.root / "abc123"
@@ -138,7 +145,7 @@ class TrainingPagesTests(SimpleTestCase):
         with patch.object(jobs.psutil, "Process", side_effect=jobs.psutil.AccessDenied(1234)), \
              patch.object(jobs.subprocess, "Popen") as spawn:
             with self.assertRaisesRegex(ValueError, "already active"):
-                jobs.start({"dataset": "sample"})
+                jobs.start({})
         spawn.assert_not_called()
 
 
@@ -236,7 +243,7 @@ class ModelPipelineTests(SimpleTestCase):
             jobs.write_json(self.path / f"personachat_truecased_full_train.part{part}.json", self.record)
         jobs.write_json(self.path / "personachat_truecased_full_valid.json", self.record)
         jobs.write_json(run / "config.json", {"data_dir": str(self.path), "cache_dir": str(self.path),
-                        "dataset": "full", "max_length": 128, "batch_size": 1, "epochs": 1,
+                        "max_length": 128, "batch_size": 1, "epochs": 1,
                         "gradient_accumulation": 8, "learning_rate": 0.0000625})
         denied_progress = []
 

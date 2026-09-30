@@ -76,9 +76,8 @@ def train(path):
         model.gradient_checkpointing_enable()
         model.to(device)
         check_stop()
-        prefix = Path(config["data_dir"]) / ("personachat_truecased_" + config["dataset"])
-        train_paths = ([f"{prefix}_train.part{part}.json" for part in range(1, 4)]
-                       if config["dataset"] == "full" else [f"{prefix}_train.json"])
+        prefix = Path(config["data_dir"]) / "personachat_truecased_full"
+        train_paths = [f"{prefix}_train.part{part}.json" for part in range(1, 4)]
         train_data = PersonaDataset(train_paths, tokenizer, config["max_length"])
         valid_data = PersonaDataset(str(prefix) + "_valid.json", tokenizer, config["max_length"])
         batcher = partial(collate, pad_id=tokenizer.pad_token_id)
