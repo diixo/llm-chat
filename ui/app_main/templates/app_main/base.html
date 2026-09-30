@@ -136,6 +136,18 @@
                     Datasets
                   </a>
                 </li>
+                <li class="nav-item">
+                  <a class="nav-link d-flex align-items-center gap-2 {% if u == 'training' %}active{% endif %}"
+                    href="{% url 'app_main:training' %}">
+                    <span class="material-icons">auto_awesome</span> Training
+                  </a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link d-flex align-items-center gap-2 {% if u == 'dialogue' %}active{% endif %}"
+                    href="{% url 'app_main:dialogue' %}">
+                    <span class="material-icons">chat</span> Dialogue
+                  </a>
+                </li>
               </ul>
 
 

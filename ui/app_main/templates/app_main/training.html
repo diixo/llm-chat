@@ -1,0 +1,84 @@
+{% extends "app_main/base.html" %}
+{% block content %}
+<h3 class="fw-bold mt-4">Training</h3>
+<p class="text-muted">Fine-tune GPT-2 124M on PersonaChat. Start with a sample run to check the setup.</p>
+{% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+<div class="row g-4 mb-4">
+  <div class="col-xl-4">
+    <div class="card"><div class="card-body">
+      <h5>New training run</h5>
+      <p class="small text-muted">English · persona + dialogue history · 2 response candidates</p>
+      <form method="post" id="training-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }} {{ field.errors }}
+        </div>
+        {% endfor %}
+        <button class="btn btn-primary" id="start-training" type="submit">Start training</button>
+      </form>
+      <p class="small text-muted mt-3 mb-0">The first run downloads GPT-2 weights. Training continues when you leave this page.</p>
+    </div></div>
+  </div>
+  <div class="col-xl-8">
+    <div class="card mb-3"><div class="card-body">
+      <h5>Latest run</h5>
+      <p id="run-status" aria-live="polite">Loading status…</p>
+      <progress id="run-progress" class="w-100" max="100" value="0" aria-label="Training progress"></progress>
+      <p id="run-metrics" class="small mt-2"></p>
+      <form method="post" id="stop-form" hidden>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="stop">
+        <input type="hidden" name="run_id" id="stop-run-id">
+        <button type="submit" class="btn btn-outline-danger" id="stop-training">Stop training</button>
+      </form>
+      <a href="{% url 'app_main:dialogue' %}" id="open-dialogue" class="btn btn-primary" hidden>Open dialogue</a>
+    </div></div>
+    <div class="card"><div class="card-body">
+      <h5>Training log</h5>
+      <pre id="training-log" class="small mb-0" style="max-height: 350px; overflow: auto; white-space: pre-wrap;"></pre>
+    </div></div>
+    <h5 class="mt-4">Runs</h5>
+    <ul id="runs" class="list-group"></ul>
+  </div>
+</div>
+<script>
+  const activeStates = ['starting', 'loading', 'training', 'validating', 'saving'];
+  async function refreshStatus() {
+    try {
+      const response = await fetch("{% url 'app_main:training_status' %}", {cache: 'no-store'});
+      if (!response.ok) throw new Error('Could not load training status. Retrying…');
+      const data = await response.json();
+      const run = data.runs[0];
+      const active = data.runs.some(item => activeStates.includes(item.state));
+      document.getElementById('start-training').disabled = active;
+      document.getElementById('run-status').textContent = run ? `${run.state}: ${run.message}` : 'No training runs yet.';
+      document.getElementById('run-progress').value = run?.progress || 0;
+      document.getElementById('training-log').textContent = data.log;
+      document.getElementById('stop-form').hidden = !run || !activeStates.includes(run.state);
+      document.getElementById('stop-run-id').value = run?.id || '';
+      document.getElementById('stop-training').disabled = Boolean(run?.stopping);
+      document.getElementById('stop-training').textContent = run?.stopping ? 'Stopping after the current operation…' : 'Stop training';
+      document.getElementById('open-dialogue').hidden = !run?.ready;
+      const metrics = [];
+      if (run?.loss != null) metrics.push(`Training loss: ${run.loss}`);
+      if (run?.perplexity != null) metrics.push(`Validation perplexity: ${run.perplexity}`);
+      if (run?.candidate_accuracy != null) metrics.push(`2-candidate accuracy: ${(run.candidate_accuracy * 100).toFixed(1)}%`);
+      document.getElementById('run-metrics').textContent = metrics.join(' · ');
+      document.getElementById('runs').replaceChildren(...data.runs.map(item => {
+        const row = document.createElement('li');
+        row.className = 'list-group-item small';
+        row.textContent = `${item.id} · ${item.config.dataset} · ${item.state}`;
+        return row;
+      }));
+    } catch (error) {
+      document.getElementById('run-status').textContent = error.message;
+    } finally {
+      window.setTimeout(refreshStatus, 3000);
+    }
+  }
+  refreshStatus();
+</script>
+{% endblock %}
