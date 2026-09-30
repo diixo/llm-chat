@@ -1,0 +1,59 @@
+{% extends "app_main/base.html" %}
+{% block content %}
+<h3 class="fw-bold mt-4">Personas</h3>
+<p class="text-muted">Unique assistant personas from the local PersonaChat training and validation datasets. Each card contains all facts describing one persona; repeated personas are shown once.</p>
+
+<form method="get" action="{% url 'app_main:personas' %}" class="card card-body mb-4" role="search">
+  <label for="persona-search" class="form-label">Search persona facts</label>
+  <div class="d-flex flex-wrap gap-2">
+    <input id="persona-search" class="form-control flex-grow-1 w-auto" type="search" name="q" value="{{ query }}" placeholder="e.g. music, dogs, teacher">
+    <button type="submit" class="btn btn-primary">Search</button>
+    {% if query %}<a class="btn btn-outline-secondary" href="{% url 'app_main:personas' %}">Clear</a>{% endif %}
+  </div>
+</form>
+
+{% if error %}
+<div class="alert alert-danger" role="alert">{{ error }}</div>
+{% else %}
+<p class="text-muted">
+  {{ total_count }} unique persona{{ total_count|pluralize }}{% if query %} &middot; {{ page_obj.paginator.count }} matching &ldquo;{{ query }}&rdquo;{% endif %}.
+  {% if page_obj.paginator.count %}Showing {{ page_obj.start_index }}&ndash;{{ page_obj.end_index }}.{% endif %}
+</p>
+<div class="row g-3 mb-4">
+  {% for persona in page_obj %}
+  <div class="col-md-6 col-xl-4">
+    <article class="card h-100">
+      <div class="card-body">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+          <h4 class="h6 mb-0">Persona {{ page_obj.start_index|add:forloop.counter0 }}</h4>
+          <div>{% for source in persona.sources %}<span class="badge text-bg-secondary">{{ source }}</span> {% endfor %}</div>
+        </div>
+        <ul class="mb-0 ps-3">
+          {% for fact in persona.facts %}<li class="mb-1 text-break">{{ fact }}</li>{% endfor %}
+        </ul>
+      </div>
+    </article>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="alert alert-info">
+      {% if query and total_count %}No personas match your search.{% else %}No personas found in the local PersonaChat datasets.{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% if page_obj.has_other_pages %}
+<nav aria-label="Persona pages" class="mb-4">
+  <ul class="pagination justify-content-center flex-wrap">
+    <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+      {% if page_obj.has_previous %}<a class="page-link" href="?q={{ query|urlencode }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>{% else %}<span class="page-link">Previous</span>{% endif %}
+    </li>
+    <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span></li>
+    <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+      {% if page_obj.has_next %}<a class="page-link" href="?q={{ query|urlencode }}&amp;page={{ page_obj.next_page_number }}">Next</a>{% else %}<span class="page-link">Next</span>{% endif %}
+    </li>
+  </ul>
+</nav>
+{% endif %}
+{% endif %}
+{% endblock %}

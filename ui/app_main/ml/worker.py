@@ -1,5 +1,5 @@
 """Background training: python -m app_main.ml.worker RUN_DIRECTORY."""
-import json
+import logging
 import math
 from pathlib import Path
 import random
@@ -8,7 +8,22 @@ import time
 import traceback
 from functools import partial
 
-from .jobs import write_json
+from .jobs import read_json, write_json
+
+logger = logging.getLogger(__name__)
+
+
+def publish_status(path, status):
+    # Record the final outcome separately: a locked progress file must not hide
+    # a successfully saved model or replace the original training error.
+    destinations = [path / "status.json"]
+    if status["state"] in {"completed", "stopped", "failed"}:
+        destinations.insert(0, path / "final-status.json")
+    for destination in destinations:
+        try:
+            write_json(destination, status)
+        except OSError:
+            logger.warning("Could not update %s; training state: %s", destination, status["state"], exc_info=True)
 
 
 class Stopped(Exception):
@@ -21,13 +36,13 @@ def train(path):
         if (path / "launched").exists():
             break
         time.sleep(0.1)
-    status = json.loads((path / "status.json").read_text(encoding="utf-8"))
-    config = json.loads((path / "config.json").read_text(encoding="utf-8"))
+    status = read_json(path / "status.json")
+    config = read_json(path / "config.json")
 
     def update(state, message, **values):
         status.update(state=state, message=message, **values)
-        write_json(path / "status.json", status)
         print(message, flush=True)
+        publish_status(path, status)
 
     def check_stop():
         if (path / "stop").exists():
@@ -69,6 +84,7 @@ def train(path):
         batcher = partial(collate, pad_id=tokenizer.pad_token_id)
         loader = DataLoader(train_data, batch_size=config["batch_size"], shuffle=True, collate_fn=batcher)
         validation = DataLoader(valid_data, batch_size=1, collate_fn=batcher)
+        # Keep the configured learning rate constant across every step and epoch.
         optimizer = torch.optim.AdamW(model.parameters(), lr=config["learning_rate"])
         scaler = torch.amp.GradScaler("cuda", enabled=device == "cuda")
         total = len(loader) * config["epochs"]

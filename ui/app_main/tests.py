@@ -238,10 +238,21 @@ class ModelPipelineTests(SimpleTestCase):
         jobs.write_json(run / "config.json", {"data_dir": str(self.path), "cache_dir": str(self.path),
                         "dataset": "full", "max_length": 128, "batch_size": 1, "epochs": 1,
                         "gradient_accumulation": 8, "learning_rate": 0.0000625})
+        denied_progress = []
+
+        def write_with_locked_progress(destination, value):
+            if destination.name == "status.json" and value["state"] == "training":
+                denied_progress.append(value["step"])
+                raise PermissionError("Simulated locked progress file")
+            return jobs.write_json(destination, value)
+
         with patch("transformers.GPT2Tokenizer.from_pretrained", return_value=self.tokenizer), \
              patch("transformers.GPT2DoubleHeadsModel.from_pretrained", return_value=model), \
-             patch("torch.cuda.is_available", return_value=False):
+             patch("torch.cuda.is_available", return_value=False), \
+             patch("app_main.ml.worker.write_json", side_effect=write_with_locked_progress), \
+             self.assertLogs("app_main.ml.worker", level="WARNING"):
             train(run)
+        self.assertTrue(denied_progress)
         status = json.loads((run / "status.json").read_text())
         self.assertEqual(status["state"], "completed", status)
         self.assertEqual(status["total"], 6)

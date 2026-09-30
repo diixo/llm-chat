@@ -1,6 +1,7 @@
 import json
 
 from django.conf import settings
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.utils.text import slugify
 from django.http import HttpResponse, JsonResponse
@@ -9,7 +10,7 @@ from filelock import FileLock, Timeout
 
 from .forms import TrainingForm, DialogueForm
 from .ml import jobs
-from . import conversations
+from . import conversations, personas as persona_catalog
 
 
 def main(request):
@@ -52,6 +53,26 @@ def training(request):
 def training_status(request):
     runs = jobs.runs()
     return JsonResponse({"runs": runs, "log": jobs.log_tail(runs[0]["id"]) if runs else ""})
+
+
+@require_GET
+def personas(request):
+    query = request.GET.get("q", "").strip()
+    error = ""
+    try:
+        catalog = persona_catalog.get_personas()
+    except (OSError, ValueError) as exc:
+        catalog = []
+        error = f"Could not load personas: {exc}"
+    filtered = catalog
+    if query:
+        needle = query.casefold()
+        filtered = [persona for persona in catalog
+                    if any(needle in fact.casefold() for fact in persona["facts"])]
+    page = Paginator(filtered, 24).get_page(request.GET.get("page"))
+    return render(request, "app_main/personas.html", {
+        "page_obj": page, "total_count": len(catalog), "query": query, "error": error,
+    })
 
 
 @require_http_methods(["GET", "POST"])

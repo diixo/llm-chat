@@ -15,6 +15,7 @@
         <div class="mb-3">
           <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
           {{ field }} {{ field.errors }}
+          {% if field.help_text %}<div id="{{ field.auto_id }}_helptext" class="form-text">{{ field.help_text }}</div>{% endif %}
         </div>
         {% endfor %}
         <button class="btn btn-primary" id="start-training" type="submit">Start training</button>

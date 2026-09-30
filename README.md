@@ -45,10 +45,20 @@ not implemented. This is an adaptation, not an exact benchmark reproduction.
 Status, logs, configuration, epoch metrics, and the final model/tokenizer are
 stored under `models/runs/<run-id>/`. Downloaded files are cached under
 `models/hf-cache/`. Both are excluded by the existing `models/` Git ignore rule.
+Status reads and writes share a file lock; temporary Windows replacement errors
+are retried. A progress-file write error is logged without aborting training.
+The final run outcome is also stored in `final-status.json`, so a blocked
+`status.json` does not hide a saved model or the original training error.
 Only one training process can run at a time. **Stop training** is cooperative:
 it waits for the current download/batch to finish. Failed/stopped runs do not
 appear as chat models. This version saves a final model after all epochs;
 it does not support resuming interrupted training.
+
+Open **Personas** in the sidebar to browse all unique assistant personas from
+the local PersonaChat files (all training parts, validation, and samples).
+Each card groups the facts describing one persona and shows its dataset split.
+Search matches persona facts; results are paginated and duplicates appear once.
+The catalog is read from JSON and refreshed when the source files change.
 
 Open **Dialogue**, choose a completed run, enter persona sentences, and send
 a message. Persona, model selection, and conversation history are saved as plain

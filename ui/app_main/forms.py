@@ -7,7 +7,10 @@ class TrainingForm(forms.Form):
     batch_size = forms.IntegerField(min_value=1, max_value=8, initial=1)
     gradient_accumulation = forms.IntegerField(min_value=1, max_value=64, initial=8)
     max_length = forms.TypedChoiceField(choices=[(128, "128"), (256, "256"), (512, "512")], coerce=int, initial=256)
-    learning_rate = forms.FloatField(min_value=0.000001, max_value=0.001, initial=0.0000625)
+    learning_rate = forms.FloatField(
+        min_value=0.000001, max_value=0.001, initial=0.00008,
+        help_text="Kept constant for the entire training run.",
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

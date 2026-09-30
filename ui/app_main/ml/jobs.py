@@ -1,10 +1,12 @@
 """Persistent local jobs; model work runs outside the Django process."""
 import json
+import logging
 import os
 from pathlib import Path
 import subprocess
 import sys
 import threading
+import time
 import uuid
 from datetime import datetime, timezone
 
@@ -14,25 +16,49 @@ from filelock import FileLock
 
 ACTIVE = {"starting", "loading", "training", "validating", "saving"}
 MODEL_FILES = ("config.json", "model.safetensors", "vocab.json", "merges.txt", "tokenizer_config.json")
+logger = logging.getLogger(__name__)
 
 
 def root():
     return Path(getattr(settings, "TRAINING_ROOT", settings.BASE_DIR.parent / "models" / "runs"))
 
 
+def read_json(path):
+    # On Windows an open reader can prevent the atomic replacement of this file.
+    with FileLock(str(path) + ".lock", timeout=5):
+        with path.open(encoding="utf-8") as source:
+            return json.load(source)
+
+
 def write_json(path, value):
     temporary = path.with_name(path.name + "." + uuid.uuid4().hex + ".tmp")
     try:
         temporary.write_text(json.dumps(value, indent=2, allow_nan=False), encoding="utf-8")
-        os.replace(temporary, path)
+        with FileLock(str(path) + ".lock", timeout=5):
+            # External readers (editors, scanners) do not honor our sidecar lock.
+            delays = (0.01, 0.02, 0.05, 0.1, 0.2, 0.4, 0.8)
+            for attempt in range(len(delays) + 1):
+                try:
+                    os.replace(temporary, path)
+                    break
+                except PermissionError:
+                    if attempt == len(delays):
+                        raise
+                    time.sleep(delays[attempt])
     finally:
-        temporary.unlink(missing_ok=True)
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:
+            logger.warning("Could not remove temporary JSON file %s", temporary, exc_info=True)
 
 
 def runs():
     result = []
     for path in sorted(root().glob("*/status.json"), reverse=True):
-        status = json.loads(path.read_text(encoding="utf-8"))
+        status = read_json(path)
+        final_path = path.parent / "final-status.json"
+        if final_path.is_file():
+            status.update(read_json(final_path))
         status.setdefault("started_at", status.get("created", path.stat().st_mtime))
         if status["state"] in ACTIVE:
             try:
