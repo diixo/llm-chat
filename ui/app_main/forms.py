@@ -20,7 +20,7 @@ class TrainingForm(forms.Form):
 class DialogueForm(forms.Form):
     run_id = forms.ChoiceField(label="Trained model")
     persona = forms.CharField(label="Assistant persona", max_length=2000,
-                              initial="I like to remodel homes.\nI like to go hunting.",
+                              initial="I am a virtual assistant.\nI am a practical weather advice assistant.",
                               help_text="Describe the assistant's character, one fact per line.",
                               widget=forms.Textarea(attrs={"rows": 3}))
     message = forms.CharField(max_length=2000, widget=forms.Textarea(attrs={"rows": 2}))
