@@ -7,7 +7,7 @@ class TrainingForm(forms.Form):
     gradient_accumulation = forms.IntegerField(min_value=1, max_value=64, initial=8)
     max_length = forms.TypedChoiceField(choices=[(128, "128"), (256, "256"), (512, "512")], coerce=int, initial=256)
     learning_rate = forms.FloatField(
-        min_value=0.000001, max_value=0.001, initial=0.00008,
+        min_value=0.000001, max_value=0.001, initial=0.0001,
         help_text="Kept constant for the entire training run.",
     )
 
